@@ -98,7 +98,7 @@ export default function Home() {
     setIsProcessing(true);
 
     try {
-      const response = await fetch('/api/execute', {
+     const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: currentCmd, token: authKey })
