@@ -1,20 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [logs, setLogs] = useState<Array<{ text: string; type: "user" | "system" | "warning"; isCode?: boolean }>>([]);
+  const [logs, setLogs] = useState<Array<{ text: string; type: "user" | "system" | "warning" }>>([]);
   const [command, setCommand] = useState("");
   const [authKey, setAuthKey] = useState("");
-  const [showAuthPanel, setShowAuthPanel] = useState(true); // Isko BYPASS ke liye pehle se khula rakh rahe hain
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const streamRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Auto-Login check if PIN already exists
   useEffect(() => {
     const savedKey = localStorage.getItem("agent_key");
-    if (savedKey) {
+    if (savedKey === "2005") {
       setAuthKey(savedKey);
+      setIsAuthorized(true);
+      setLogs([{ text: "🔐 AUTO-AUTHENTICATED: ACCESS GRANTED TO HUMAN_BOSS.", type: "system" }]);
     } else {
-      setLogs([{ text: "⚠️ CRITICAL ERR: DECRYPTION KEY MISSING. ACCESS DENIED.", type: "warning" }]);
+      setLogs([{ text: "⚠️ CRITICAL ERR: SYSTEM LOCKED. ENTER 4-DIGIT SECURE PIN.", type: "warning" }]);
     }
   }, []);
 
@@ -84,21 +87,26 @@ export default function Home() {
     }
   }, [logs]);
 
-  const handleAuthKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newKey = e.target.value;
-    setAuthKey(newKey);
-    localStorage.setItem("agent_key", newKey);
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authKey === "2005") {
+      localStorage.setItem("agent_key", authKey);
+      setIsAuthorized(true);
+      setLogs((prev) => [...prev, { text: "🔓 ACCESS UNLOCKED. WELCOME BACK.", type: "system" }]);
+    } else {
+      setLogs((prev) => [...prev, { text: "❌ INVALID PIN. ACCESS DENIED.", type: "warning" }]);
+    }
   };
 
   const handleExecute = async () => {
-    if (!command.trim()) return;
-    setLogs((prev) => [...prev, { text: `C:\\USER\\HUMAN>> ${command}`, type: "user" }]);
+    if (!command.trim() || !isAuthorized) return;
+    setLogs((prev) => [...prev, { text: `C:\\USER\\HUMAN> ${command}`, type: "user" }]);
     const currentCmd = command;
     setCommand("");
     setIsProcessing(true);
 
     try {
-     const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
+      const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: currentCmd, token: authKey })
@@ -122,22 +130,28 @@ export default function Home() {
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, opacity: 0.15, pointerEvents: 'none' }} />
       
       {/* Top Header */}
-      <div style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'between', fontSize: '12px', fontWeight: 'bold' }}>
+      <div style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 'bold' }}>
         <div>[SYSTEM://CREATIVE_HUMAN_AGNT_v2.6]</div>
-        <div style={{ marginLeft: 'auto' }}>[SYS_STATUS: ONLINE]</div>
+        <div>[SYS_STATUS: {isAuthorized ? "ONLINE" : "LOCKED"}]</div>
       </div>
 
-      {/* Password Key Box (Ab ekdum hidden aur secure) */}
-<div style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: '#050508' }}>
-  <span style={{ fontSize: '11px' }}>[ENTER AUTH KEY]: </span>
-  <input 
-    type="password" 
-    value={authKey} 
-    onChange={handleAuthKeyChange} 
-    placeholder="ENTER SECRET TOKEN..." 
-    style={{ background: 'black', border: '1px solid #00ff66', backgroundColor: 'black', color: '#00ff66', fontSize: '11px', padding: '2px 5px', width: '70%', outline: 'none' }} 
-  />
-</div>
+      {/* PIN Box - Sirf tab dikhega jab user login nahi hoga */}
+      {!isAuthorized && (
+        <form onSubmit={handlePinSubmit} style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: '#050508', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px' }}>[ENTER 4-DIGIT PIN]: </span>
+          <input 
+            type="password" 
+            maxLength={4}
+            value={authKey} 
+            onChange={(e) => setAuthKey(e.target.value)} 
+            placeholder="••••" 
+            style={{ background: 'black', border: '1px solid #00ff66', color: '#00ff66', fontSize: '11px', padding: '2px 5px', width: '60px', textAlign: 'center', outline: 'none' }} 
+          />
+          <button type="submit" style={{ background: 'transparent', border: '1px solid #00ff66', color: '#00ff66', padding: '2px 10px', fontSize: '11px', cursor: 'pointer' }}>
+            [UNLOCK]
+          </button>
+        </form>
+      )}
 
       {/* Terminal Logs View */}
       <div ref={streamRef} style={{ flex: 1, overflowY: 'auto', padding: '10px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -154,12 +168,13 @@ export default function Home() {
         <input 
           type="text" 
           value={command} 
+          disabled={!isAuthorized}
           onChange={(e) => setCommand(e.target.value)} 
           onKeyDown={(e) => e.key === 'Enter' && handleExecute()} 
-          placeholder="TYPE COMMAND HERE..." 
+          placeholder={isAuthorized ? "TYPE COMMAND HERE..." : "SYSTEM LOCKED. UNLOCK ABOVE FIRST."} 
           style={{ flex: 1, background: 'transparent', border: 'none', color: '#00ff66', outline: 'none', fontSize: '12px' }} 
         />
-        <button onClick={handleExecute} style={{ background: 'transparent', border: '1px solid #00ff66', color: '#00ff66', padding: '2px 10px', fontSize: '11px', cursor: 'pointer' }}>
+        <button onClick={handleExecute} disabled={!isAuthorized} style={{ background: 'transparent', border: '1px solid #00ff66', color: '#00ff66', padding: '2px 10px', fontSize: '11px', cursor: 'pointer' }}>
           [EXECUTE]
         </button>
       </div>
