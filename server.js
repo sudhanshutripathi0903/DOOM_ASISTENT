@@ -1,4 +1,42 @@
-// server.js ke 'execute' endpoint ko isse badlo:
+import express from 'express';
+import dotenv from 'dotenv';
+import pg from 'pg';
+import cors from 'cors';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
+}));
+
+app.use(express.json());
+
+const port = process.env.PORT || 5000;
+
+const { Pool } = pg;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Initialize Gemini Client
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+app.get('/api/status', async (req, res) => {
+  try {
+    const dbCheck = await pool.query('SELECT NOW()');
+    res.json({ status: "ONLINE", database: "CONNECTED", timestamp: dbCheck.rows[0].now });
+  } catch (err) {
+    res.status(500).json({ status: "DEGRADED", error: err.message });
+  }
+});
+
+// Core API Endpoint
 app.post('/api/execute', async (req, res) => {
   const { command, token } = req.body;
 
@@ -7,10 +45,10 @@ app.post('/api/execute', async (req, res) => {
   }
 
   try {
-    // 1. Storage clean-up
+    // 1. Auto-cleanup logs older than 7 days
     await pool.query("DELETE FROM logs WHERE executed_at < NOW() - INTERVAL '7 days'");
 
-    // 2. Correct Gemini AI Syntax
+    // 2. Format configuration for Gemini
     const systemInstruction = `
       You are the core intelligence of the OpenClaw Agent Terminal (v2.6).
       The user is HUMAN_BOSS. 
@@ -20,29 +58,44 @@ app.post('/api/execute', async (req, res) => {
       2. For CODE or structured text (like letters/notes): Break lines properly with paragraphs/indentation so it is highly readable. Do not dump text in one single line.
     `;
 
-    // Sahi SDK configuration syntax
     const aiResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: command,
       config: {
-        systemInstruction: systemInstruction,
-        // Taaki text clean format mein aaye
-        responseMimeType: "text/plain" 
+        systemInstruction: systemInstruction
       }
     });
 
     const aiFeedback = aiResponse.text || "[SECURE_NODE]: Empty output from core node.";
 
-    // 3. Database mein log karo
+    // 3. Log to Database
     const queryText = 'INSERT INTO logs(command, executed_at) VALUES($1, NOW()) RETURNING *';
     await pool.query(queryText, [`User: ${command} | AI: ${aiFeedback}`]);
 
-    // Response wapas bhejo
     res.json({ feedback: aiFeedback });
 
   } catch (err) {
-    console.error("Backend Error:", err);
-    // Isse exact error message frontend par dikhega agar koi dikkat hui toh
+    console.error("Execution Error:", err);
     res.status(500).json({ error: `System Core Error: ${err.message}` });
   }
+});
+
+const initDb = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id SERIAL PRIMARY KEY,
+        command TEXT NOT NULL,
+        executed_at TIMESTAMP NOT NULL
+      );
+    `);
+    console.log("🗄️ PostgreSQL Logs Table Initialized.");
+  } catch (err) {
+    console.error("❌ DB Init Error:", err.message);
+  }
+};
+
+app.listen(port, '0.0.0.0', async () => {
+  await initDb();
+  console.log(`🤖 AI-Powered Agent Core Server listening at port ${port}`);
 });
