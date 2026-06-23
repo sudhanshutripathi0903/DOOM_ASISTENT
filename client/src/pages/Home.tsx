@@ -116,17 +116,17 @@ export default function Home() {
         <div style={{ marginLeft: 'auto' }}>[SYS_STATUS: ONLINE]</div>
       </div>
 
-      {/* Password Key Box (Hamesha visible) */}
-      <div style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: '#050508' }}>
-        <span style={{ fontSize: '11px' }}>[INPUT KEY]: </span>
-        <input 
-          type="text" 
-          value={authKey} 
-          onChange={handleAuthKeyChange} 
-          placeholder="PASTE: MATRIX_OVERRIDE_99X!!" 
-          style={{ border: '1px solid #00ff66', backgroundColor: 'black', color: '#00ff66', fontSize: '11px', padding: '2px 5px', width: '70%', outline: 'none' }} 
-        />
-      </div>
+      {/* Password Key Box (Ab ekdum hidden aur secure) */}
+<div style={{ padding: '10px', borderBottom: '1px solid #00ff66', background: '#050508' }}>
+  <span style={{ fontSize: '11px' }}>[ENTER AUTH KEY]: </span>
+  <input 
+    type="password" 
+    value={authKey} 
+    onChange={handleAuthKeyChange} 
+    placeholder="ENTER SECRET TOKEN..." 
+    style={{ background: 'black', border: '1px solid #00ff66', backgroundColor: 'black', color: '#00ff66', fontSize: '11px', padding: '2px 5px', width: '70%', outline: 'none' }} 
+  />
+</div>
 
       {/* Terminal Logs View */}
       <div ref={streamRef} style={{ flex: 1, overflowY: 'auto', padding: '10px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
