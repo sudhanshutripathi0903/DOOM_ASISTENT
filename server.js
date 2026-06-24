@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import cors from 'cors';
-import { GoogleGenAI } from '@google/genai';
+import { Groq } from 'groq-sdk';
 
 dotenv.config();
 
@@ -24,8 +24,8 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize Groq Client
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 app.get('/api/status', async (req, res) => {
   try {
@@ -48,9 +48,9 @@ app.post('/api/execute', async (req, res) => {
     // 1. Auto-cleanup logs older than 7 days
     await pool.query("DELETE FROM logs WHERE executed_at < NOW() - INTERVAL '7 days'");
 
-    // 2. Format configuration for Gemini
+    // 2. Chat Completion with Groq (Llama 3 model)
     const systemInstruction = `
-      You are the core intelligence of the OpenClaw Agent Terminal (v2.6).
+      You are the core intelligence of the Proxy-Mate Agent Terminal (v2.6).
       The user is HUMAN_BOSS. 
       
       RULES:
@@ -58,15 +58,15 @@ app.post('/api/execute', async (req, res) => {
       2. For CODE or structured text (like letters/notes): Break lines properly with paragraphs/indentation so it is highly readable. Do not dump text in one single line.
     `;
 
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: command,
-      config: {
-        systemInstruction: systemInstruction
-      }
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: command }
+      ],
+      model: 'llama3-8b-8192', // Super fast and free model
     });
 
-    const aiFeedback = aiResponse.text || "[SECURE_NODE]: Empty output from core node.";
+    const aiFeedback = chatCompletion.choices[0]?.message?.content || "[SECURE_NODE]: Empty output from core node.";
 
     // 3. Log to Database
     const queryText = 'INSERT INTO logs(command, executed_at) VALUES($1, NOW()) RETURNING *';
