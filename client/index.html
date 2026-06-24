@@ -36,7 +36,6 @@
             pointer-events: none;
         }
 
-        /* Space BG Moving Graphics using pure CSS */
         .space-bg-css {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -85,7 +84,6 @@
             box-shadow: 0 0 10px #22c55e;
         }
 
-        /* Lock Screen Sliding transition */
         .slide-out {
             transform: translateX(100vw);
             opacity: 0;
@@ -107,8 +105,8 @@
                     id="pin-input"
                     maxLength="4"
                     placeholder="••••" 
-                    className="w-full bg-transparent border-none outline-none text-center font-mono text-2xl tracking-[0.5em] text-cyan-400 focus:outline-none"
-                    style="background: transparent; border: none; color: #00f0ff; text-align: center;"
+                    style="background: transparent; border: none; color: #00f0ff; text-align: center; outline: none;"
+                    class="w-full font-mono text-2xl tracking-[0.5em]"
                 />
                 <button onclick="verifyPin()" class="p-1 text-cyan-400 hover:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
@@ -119,7 +117,7 @@
 
     <div class="relative z-10 h-screen w-full max-w-2xl mx-auto flex flex-col justify-between items-center px-4 py-6">
         
-        <header class="glass-panel border border-cyan-500/10 rounded-2xl w-full px-6 py-4 flex items-center justify-between shadow-xl">
+        <header class="glass-panel border border-cyan-500/10 rounded-2xl w-full px-6 py-4 flex items-center justify-between shadow-xl flex-shrink-0">
             <h1 class="font-orbitron text-xl font-bold tracking-wider text-white">AATOS<span class="text-cyan-400">AI</span></h1>
             <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/20 bg-cyan-500/5">
                 <div class="status-dot"></div>
@@ -132,39 +130,47 @@
             <div class="orbital-ring w-[500px] h-[500px] border-purple-400/10" style="animation-duration: 40s; animation-direction: reverse;"></div>
         </div>
 
-        <div id="status-badge" class="my-4 text-center z-10 transition-all duration-500">
-            <div class="font-mono text-xs text-cyan-400 tracking-[0.2em] bg-cyan-500/5 border border-cyan-500/10 px-4 py-2 rounded-full inline-block backdrop-blur-sm animate-pulse">
-                SERVER IS ONLINE // AI IS ACTIVATED
-            </div>
-        </div>
-
-        <div id="hero-view" class="text-center my-auto flex flex-col items-center justify-center z-10">
-            <h1 class="font-orbitron text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
-                AATOS <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">INTELLIGENCE</span>
-            </h1>
-            <p class="text-gray-400 text-xs max-w-sm font-rajdhani tracking-wide uppercase">
-                SYSTEM SECURITY ENCRYPTED // CORE TERMINAL v2.6 ACTIVE
-            </p>
-        </div>
-
-        <div id="chat-box" class="w-full flex-1 overflow-y-auto space-y-4 max-h-[62vh] mb-4 hidden z-10 pr-1">
-            </div>
-
-        <div class="w-full max-w-xl mt-auto z-10">
-            <div class="glass-panel border border-cyan-500/20 rounded-2xl p-2.5 shadow-2xl">
-                <div class="flex items-center gap-2">
-                    <input 
-                        type="text" 
-                        id="cmd-input"
-                        placeholder="Ask anything about cosmos or code..." 
-                        class="flex-1 bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none outline-none px-2 py-1.5"
-                    />
-                    <button onclick="executeCommand()" class="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 transition-all flex-shrink-0">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                    </button>
+        <div id="dynamic-hub" class="w-full flex-1 flex flex-col justify-center items-center my-auto">
+            
+            <div id="status-badge" class="mb-4 text-center transition-all duration-500">
+                <div class="font-mono text-xs text-cyan-400 tracking-[0.2em] bg-cyan-500/5 border border-cyan-500/10 px-4 py-2 rounded-full inline-block backdrop-blur-sm animate-pulse">
+                    SERVER IS ONLINE // AI IS ACTIVATED
                 </div>
             </div>
+
+            <div id="hero-view" class="text-center flex flex-col items-center justify-center mb-6">
+                <h1 class="font-orbitron text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
+                    AATOS <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">INTELLIGENCE</span>
+                </h1>
+                <p class="text-gray-400 text-xs max-w-sm font-rajdhani tracking-wide uppercase">
+                    SYSTEM SECURITY ENCRYPTED // CORE TERMINAL v2.6 ACTIVE
+                </p>
+            </div>
+
+            <div id="chat-box" class="w-full overflow-y-auto space-y-4 max-h-[64vh] mb-4 hidden pr-1">
+                </div>
+
+            <div class="w-full max-w-xl">
+                <div class="glass-panel border border-cyan-500/20 rounded-2xl p-2.5 shadow-2xl">
+                    <div class="flex items-center gap-2">
+                        <input 
+                            type="text" 
+                            id="cmd-input"
+                            placeholder="Ask anything about cosmos or code..." 
+                            class="flex-1 bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none outline-none px-2 py-1.5"
+                        />
+                        <button onclick="executeCommand()" class="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 transition-all flex-shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+        <footer class="text-[10px] font-mono text-gray-600 mt-2 flex-shrink-0">
+            AATOS AI MATRIX PROTOCOL v2.6
+        </footer>
     </div>
 
     <script>
@@ -174,43 +180,49 @@
         const chatBox = document.getElementById('chat-box');
         const cmdInput = document.getElementById('cmd-input');
         const statusBadge = document.getElementById('status-badge');
+        const dynamicHub = document.getElementById('dynamic-hub');
 
         let isChatStarted = false;
 
-        // Verify Lock Pin
         function verifyPin() {
             if (pinInput.value === "2005") {
                 lockScreen.classList.add('slide-out');
+                setTimeout(() => {
+                    if (!isChatStarted) {
+                        isChatStarted = true;
+                        heroView.style.display = 'none';
+                        statusBadge.style.display = 'none'; // Unnecessary after entry
+                        dynamicHub.classList.remove('justify-center'); // Shift to top-flow layout
+                        chatBox.style.display = 'block';
+                        appendMessage('ai', 'Greetings, Commander. I am AATOS, your orbital intelligence core. Systems are fully responsive and under your direct command.');
+                    }
+                }, 400);
             } else {
                 alert("❌ ACCESS DENIED: ENCRYPTION KEY MISMATCH");
                 pinInput.value = '';
             }
         }
 
-        // Allow 'Enter' key on Lock screen
         pinInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') verifyPin();
         });
 
-        // Execute Command to Render API
         async function executeCommand() {
             const text = cmdInput.value.trim();
             if (!text) return;
 
-            // Gemini style view shifting
             if (!isChatStarted) {
                 isChatStarted = true;
                 heroView.style.display = 'none';
-                statusBadge.style.opacity = '0.4'; // Dim down status slightly to save layout focus
+                statusBadge.style.display = 'none';
+                dynamicHub.classList.remove('justify-center');
                 chatBox.style.display = 'block';
             }
 
-            // Append User message
             appendMessage('user', text);
             cmdInput.value = '';
 
-            // Append Loading skeleton
-            const loaderId = appendMessage('ai', 'SYNTHESIZING MATRIX...');
+            const loaderId = appendMessage('ai', 'AATOS IS SYNTHESIZING...');
 
             try {
                 const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
@@ -220,8 +232,14 @@
                 });
                 const data = await response.json();
                 
-                // Update loader with real feedback
-                document.getElementById(loaderId).innerText = data.feedback || data.error;
+                let systemReply = data.feedback || data.error;
+                
+                systemReply = systemReply.replace(/Proxy-Mote Agent Terminal's core intelligence/gi, "AATOS");
+                systemReply = systemReply.replace(/Proxy-Mote/gi, "AATOS");
+                systemReply = systemReply.replace(/HUMAN_BOSS/gi, "Commander");
+                systemReply = systemReply.replace(/Human Boss/gi, "Commander");
+                
+                document.getElementById(loaderId).innerText = systemReply;
             } catch (err) {
                 document.getElementById(loaderId).innerText = `System Core Error: ${err.message}`;
             }
@@ -229,16 +247,14 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Allow 'Enter' key on Chat Input
         cmdInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') executeCommand();
         });
 
-        // Helper to append template bubbles
         function appendMessage(type, content) {
             const id = 'msg-' + Math.random().toString(36).substr(2, 9);
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'}`;
+            wrapper.className = `w-full flex ${type === 'user' ? 'justify-end' : 'justify-start'}`;
             
             const card = document.createElement('div');
             card.className = `holo-card rounded-xl p-4 max-w-[85%] text-sm md:text-base ${type === 'user' ? 'border-r-4 border-r-cyan-400 bg-cyan-500/5' : 'border-l-4 border-l-purple-500 bg-purple-500/5'}`;
