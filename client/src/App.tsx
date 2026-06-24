@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as THREE from 'three'; // Iski zaroorat padegi agar config sahi hai, warna fallback setup chalega
 import './index.css';
 
 interface HistoryItem {
@@ -7,7 +8,6 @@ interface HistoryItem {
 }
 
 function App() {
-  // States for Security and UI Flow
   const [pin, setPin] = useState<string>('');
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [isSlidingOut, setIsSlidingOut] = useState<boolean>(false);
@@ -18,34 +18,118 @@ function App() {
     { type: 'ai', text: 'Greetings, Commander. I am AATOS, your orbital intelligence core. Security protocols initialized.' }
   ]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [streams, setStreams] = useState<string[]>([]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Auto Scroll Chat
+  // 📡 Effect 1: Falling Data Streams (Hacker Matrix effect)
+  useEffect(() => {
+    const streamTexts = [
+      '01001110 01000101 01011000 01010101',
+      'import { quantum } from "@aatos/core"',
+      'SAT_LINK: ESTABLISHED // LATENCY: 12ms',
+      'NASA_API: CONNECTED // ISRO_DATA: SYNCED',
+      'AATOS_MODEL: LOADED // ENCRYPTION: ACTIVE',
+      'TELEMETRY: NOMINAL // ORBIT: STABLE'
+    ];
+
+    const interval = setInterval(() => {
+      setStreams(prev => {
+        const next = [...prev, streamTexts[Math.floor(Math.random() * streamTexts.length)]];
+        if (next.length > 8) next.shift(); // Purane remove karo taaki lag na ho
+        return next;
+      });
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🌌 Effect 2: THREE.JS Cosmic Motion Graphics Starfield
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true, antialias: true });
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const starGeometry = new THREE.BufferGeometry();
+    const starCount = 2000;
+    const positions = new Float32Array(starCount * 3);
+
+    for (let i = 0; i < starCount * 3; i++) {
+      positions[i] = (Math.random() - 0.5) * 150;
+    }
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const starMaterial = new THREE.PointsMaterial({
+      size: 0.4,
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.6,
+      sizeAttenuation: true
+    });
+
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
+    camera.position.z = 5;
+
+    // Mouse track for dynamic movement
+    let mouseX = 0, mouseY = 0;
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 1.5;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 1.5;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      stars.rotation.y += 0.0004;
+      stars.rotation.x += 0.0002;
+      camera.position.x += (mouseX - camera.position.x) * 0.05;
+      camera.position.y += (-mouseY - camera.position.y) * 0.05;
+      camera.lookAt(scene.position);
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+    };
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
 
-  // Security Verification and Sliding Gate Effect
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin === "2005") {
-      setIsSlidingOut(true); // Start sliding transition
-      setTimeout(() => {
-        setIsUnlocked(true); // Destroy lock screen from DOM
-      }, 600);
+      setIsSlidingOut(true);
+      setTimeout(() => setIsUnlocked(true), 600);
     } else {
       alert("❌ ACCESS DENIED: ENCRYPTION KEY MISMATCH");
       setPin('');
     }
   };
 
-  // API Execution Command
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!command.trim()) return;
 
-    if (!isChatStarted) setIsChatStarted(true); // Push input field to bottom like Gemini
+    if (!isChatStarted) setIsChatStarted(true);
 
     const userMove: HistoryItem = { type: 'user', text: command };
     setHistory(prev => [...prev, userMove]);
@@ -57,10 +141,7 @@ function App() {
       const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          command: currentCmd, 
-          token: "2005" 
-        })
+        body: JSON.stringify({ command: currentCmd, token: "2005" })
       });
       const data = await response.json();
       setHistory(prev => [...prev, { type: 'ai', text: data.feedback || data.error }]);
@@ -72,12 +153,32 @@ function App() {
   };
 
   return (
-    <div className="scanlines relative min-h-screen w-full bg-[#050508] text-gray-200 font-rajdhani overflow-x-hidden flex flex-col z-10">
+    <div className="scanlines relative min-h-screen w-full bg-[#050508] text-gray-200 font-rajdhani overflow-hidden flex flex-col z-10">
       
-      {/* 🔐 SECURITY PIN SCREEN MASKING */}
+      {/* 🌌 LIVE 3D CANVAS BACKDROP */}
+      <canvas ref={canvasRef} id="three-canvas" className="fixed inset-0 pointer-events-none z-0"></canvas>
+
+      {/* 🛰️ FALLING TELEMETRY DATA STREAMS */}
+      <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden opacity-30">
+        {streams.map((txt, i) => (
+          <div 
+            key={i} 
+            className="absolute font-mono text-[10px] text-cyan-400 whitespace-nowrap"
+            style={{ 
+              left: `${(i * 15) % 90 + 5}%`, 
+              top: `${(i * 20) % 70 + 10}%`,
+              animation: 'pulse 3s infinite alternate'
+            }}
+          >
+            {txt}
+          </div>
+        ))}
+      </div>
+      
+      {/* 🔐 SECURITY MASK */}
       {!isUnlocked && (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a12]/95 backdrop-blur-2xl transition-all duration-600 ease-in-out ${isSlidingOut ? 'translate-x-full opacity-0' : 'translate-x-0'}`}>
-          <div className="text-center p-8 rounded-2xl border border-cyan-500/20 bg-space-900 max-w-sm w-full mx-4 shadow-2xl shadow-cyan-500/10">
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#050508]/95 backdrop-blur-3xl transition-all duration-700 ease-in-out ${isSlidingOut ? 'translate-x-full opacity-0' : 'translate-x-0'}`}>
+          <div className="text-center p-8 rounded-2xl border border-cyan-500/20 bg-[#0a0a12] max-w-sm w-full mx-4 shadow-2xl shadow-cyan-500/10">
             <h2 className="font-orbitron text-xl font-bold tracking-widest text-white mb-2">AATOS CORE LOCK</h2>
             <p className="text-xs font-mono text-cyan-400/60 uppercase tracking-widest mb-6">Enter Authorization Token</p>
             <form onSubmit={handlePinSubmit} className="flex items-center gap-2 border border-cyan-400/30 rounded-xl px-4 py-2 bg-black/40">
@@ -90,60 +191,53 @@ function App() {
                 className="w-full bg-transparent border-none outline-none text-center font-mono text-2xl tracking-[0.5em] text-cyan-400"
               />
               <button type="submit" className="p-2 text-cyan-400 hover:text-white transition-colors">
-                <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* HEADER SECTION */}
-      <header class="glass-panel border-b border-cyan-500/10 sticky top-0 z-50">
-          <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                  <h1 class="font-orbitron text-xl font-bold tracking-wider text-white">AATOS<span class="text-cyan-400">AI</span></h1>
-                  <p class="text-[10px] font-mono text-cyan-400/60 tracking-[0.3em] uppercase hidden sm:block">Orbital Intelligence Terminal</p>
+      {/* HEADER */}
+      <header className="glass-panel border-b border-cyan-500/10 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                  <h1 className="font-orbitron text-xl font-bold tracking-wider text-white">AATOS<span className="text-cyan-400">AI</span></h1>
+                  <p className="text-[10px] font-mono text-cyan-400/60 tracking-[0.3em] uppercase hidden sm:block">Orbital Intelligence Terminal</p>
               </div>
-              <div class="flex items-center gap-4">
-                  <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/5">
-                      <div class="status-dot"></div>
-                      <span class="text-xs font-mono text-cyan-400/80">CORE SECURE</span>
+              <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/5">
+                      <div className="status-dot"></div>
+                      <span className="text-xs font-mono text-cyan-400/80">CORE SECURE</span>
                   </div>
-                  <div class="w-9 h-9 rounded-full border border-cyan-400/30 bg-cyan-500/10 flex items-center justify-center font-orbitron font-bold text-cyan-400">S</div>
               </div>
           </div>
       </header>
 
-      {/* SPACE RINGS BACKDROP */}
+      {/* BACKDROP RINGS */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-          <div class="orbital-ring w-[400px] h-[400px]" style={{ animationDuration: '20s' }}></div>
-          <div class="orbital-ring w-[700px] h-[700px] border-purple-400/10" style={{ animationDuration: '35s', animationDirection: 'reverse' }}></div>
+          <div className="orbital-ring w-[300px] h-[300px]" style={{ animationDuration: '25s' }}></div>
+          <div className="orbital-ring w-[600px] h-[600px] border-purple-400/10" style={{ animationDuration: '40s', animationDirection: 'reverse' }}></div>
       </div>
 
-      {/* 🚀 MAIN CONTENT BODY */}
+      {/* MAIN CONTAINER */}
       <main className="flex-1 flex flex-col justify-between max-w-4xl w-full mx-auto p-4 z-10 relative">
-        
-        {/* UPPER HERO VIEW (Fades out when chat starts) */}
         {!isChatStarted && (
           <div className="text-center my-auto py-8">
-            <h1 className="font-orbitron text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">
+            <h1 className="font-orbitron text-4xl md:text-6xl font-black text-white mb-4 tracking-tight animate-pulse">
               AATOS <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">INTELLIGENCE</span>
             </h1>
-            <p className="text-gray-400 text-base max-w-md mx-auto font-rajdhani">
-              Harness the power of real-time server synthesis with elite space telemetry node interfaces.
+            <p className="text-gray-400 text-sm max-w-md mx-auto font-rajdhani">
+              Harnessing multi-cluster data streams under elite space agency control node environments.
             </p>
           </div>
         )}
 
-        {/* 💬 CHAT BOX (Occupies space when chat expands) */}
         {isChatStarted && (
-          <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[65vh] mb-4 mt-2">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[60vh] mb-4 mt-2">
             {history.map((item, index) => (
               <div key={index} className={`flex ${item.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`holo-card rounded-xl p-4 max-w-2xl text-base ${item.type === 'user' ? 'border-r-4 border-r-cyan-400 bg-cyan-500/5' : 'border-l-4 border-l-purple-500 bg-purple-500/5'}`}>
-                  <div className="flex items-center gap-2 mb-1.5 font-orbitron text-xs font-bold text-cyan-400">
-                    <span>{item.type === 'user' ? 'COMMANDER' : 'AATOS CORE'}</span>
-                  </div>
                   <p className="text-gray-200 font-rajdhani leading-relaxed whitespace-pre-line">{item.text}</p>
                 </div>
               </div>
@@ -151,7 +245,7 @@ function App() {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="holo-card rounded-xl p-4 w-32 flex items-center justify-center">
-                  <span className="text-xs font-mono text-cyan-400 animate-pulse">THINKING...</span>
+                  <span className="text-xs font-mono text-cyan-400 animate-pulse">SYNTHESIZING...</span>
                 </div>
               </div>
             )}
@@ -159,24 +253,23 @@ function App() {
           </div>
         )}
 
-        {/* 🎛️ MOVING INTERFACE INPUT CONTROL BOX (Gemini Style Box Movement) */}
-        <div className={`w-full transition-all duration-500 ease-in-out ${!isChatStarted ? 'my-auto max-w-2xl mx-auto' : 'mt-auto'}`}>
-          <div className="glass-panel border border-cyan-500/20 rounded-2xl p-4 shadow-2xl">
+        {/* CONTROLS (Gemini Transition Layout) */}
+        <div className={`w-full transition-all duration-500 ease-in-out ${!isChatStarted ? 'my-auto max-w-xl mx-auto' : 'mt-auto'}`}>
+          <div className="glass-panel border border-cyan-500/20 rounded-2xl p-3 shadow-2xl shadow-cyan-400/5">
             <form onSubmit={handleSubmit} className="flex items-center gap-3">
               <input 
                 type="text" 
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 placeholder="Ask anything about the cosmos, code, or operational vectors..." 
-                className="flex-1 bg-space-900/60 border border-cyan-500/10 rounded-xl px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-400/40 transition-all outline-none"
+                className="flex-1 bg-space-900/60 border border-cyan-500/10 rounded-xl px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-400/40 transition-all outline-none"
               />
-              <button type="submit" className="p-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 transition-all group shadow-lg">
-                <svg className="w-5 h-5 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              <button type="submit" className="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 transition-all shadow-md">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
               </button>
             </form>
           </div>
         </div>
-
       </main>
     </div>
   );
