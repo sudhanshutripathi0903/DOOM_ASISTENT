@@ -22,13 +22,13 @@ function App() {
     setCommand('');
 
     try {
-      // YAHAN APNA RENDER KA ASLI URL DAALNA AGAR YAAD HO
-      const response = await fetch('https://YOUR-RENDER-BACKEND-URL.onrender.com/api/execute', {
+      // ✅ Tumhara live backend link yahan perfectly config ho gaya hai:
+      const response = await fetch('https://open-claw-backend.onrender.com/api/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           command: currentCmd, 
-          token: "2005" // Tumhara secure PIN encryption key [cite: 16, 19, 20]
+          token: "2005" // Tumhara secure PIN encryption key
         })
       });
       const data = await response.json();
