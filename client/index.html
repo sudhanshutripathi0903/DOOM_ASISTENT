@@ -90,12 +90,17 @@
             pointer-events: none;
         }
 
-        /* 🎪 GENIUNE DYNAMIC SLIDE-UP EFFECT */
-        #hero-section {
-            transition: all 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        /* ✨ EXTREME GEMINI BLUR-SLIDE TRANSITION FOR HERO TEXT */
+        #hero-view {
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), filter 0.6s ease, opacity 0.5s ease;
+            will-change: transform, filter;
         }
-        .shift-to-top {
-            transform: translateY(-28vh) scale(0.85);
+        
+        /* Box par touch/focus karte hi ye class trigger hogi */
+        .hero-shifted {
+            transform: translateY(-32vh) scale(0.8);
+            filter: blur(4px);
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -138,9 +143,9 @@
             <div class="orbital-ring w-[500px] h-[500px] border-purple-400/10" style="animation-duration: 40s; animation-direction: reverse;"></div>
         </div>
 
-        <div id="hero-section" class="w-full flex-1 flex flex-col justify-center items-center z-10">
+        <div class="w-full flex-1 flex flex-col justify-center items-center my-auto relative">
             
-            <div class="text-center flex flex-col items-center justify-center mb-6">
+            <div id="hero-view" class="text-center flex flex-col items-center justify-center absolute top-[38%] transform -translate-y-1/2 z-10">
                 <h1 class="font-orbitron text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
                     AATOS <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400">INTELLIGENCE</span>
                 </h1>
@@ -149,12 +154,16 @@
                 </p>
             </div>
 
-            <div class="w-full max-w-xl">
+            <div id="chat-box" class="w-full overflow-y-auto space-y-4 h-[52vh] max-h-[52vh] mb-6 hidden z-10 pr-1 mt-16">
+                </div>
+
+            <div class="w-full max-w-xl z-20 absolute bottom-[25%] transition-all duration-700" id="input-wrapper">
                 <div class="glass-panel border border-cyan-500/20 rounded-2xl p-2.5 shadow-2xl">
                     <div class="flex items-center gap-2">
                         <input 
                             type="text" 
                             id="cmd-input"
+                            onfocus="startChatTransition()"
                             placeholder="Ask anything about cosmos or code..." 
                             class="flex-1 bg-transparent border-none text-sm text-gray-200 placeholder-gray-600 focus:outline-none outline-none px-2 py-1.5"
                         />
@@ -167,21 +176,19 @@
 
         </div>
 
-        <div id="chat-box" class="w-full overflow-y-auto space-y-4 h-[50vh] max-h-[50vh] mb-4 hidden z-10 pr-1">
-            </div>
-
         <footer class="text-[10px] font-mono text-gray-600 mt-2 flex-shrink-0">
             AATOS AI MATRIX PROTOCOL v2.6
         </footer>
     </div>
 
-    <script {safe}>
+    <script>
         const lockScreen = document.getElementById('lock-screen');
         const pinInput = document.getElementById('pin-input');
-        const heroSection = document.getElementById('hero-section');
+        const heroView = document.getElementById('hero-view');
         const chatBox = document.getElementById('chat-box');
         const cmdInput = document.getElementById('cmd-input');
         const subTitle = document.getElementById('sub-title');
+        const inputWrapper = document.getElementById('input-wrapper');
 
         let isChatStarted = false;
 
@@ -198,23 +205,32 @@
             if (e.key === 'Enter') verifyPin();
         });
 
+        // 🔥 CRITICAL CLICK/FOCUS EVENT TRANSITION (GEMINI STYLE)
+        function startChatTransition() {
+            if (isChatStarted) return;
+            isChatStarted = true;
+
+            // 1. Smoothly blur and slide up the title heading
+            heroView.classList.add('hero-shifted');
+            subTitle.style.opacity = '0'; // Fade out subtitle smoothly
+
+            // 2. Anchor input wrapper to the exact bottom layout track
+            inputWrapper.style.bottom = '0px';
+
+            // 3. Open chat block area underneath right after transform
+            setTimeout(() => {
+                chatBox.style.display = 'block';
+                // Trigger standard greetings from AATOS Core
+                appendMessage('ai', 'Greetings, Commander. I am AATOS, your orbital intelligence core. Systems are fully responsive and under your direct command.');
+            }, 300);
+        }
+
         async function executeCommand() {
             const text = cmdInput.value.trim();
             if (!text) return;
 
-            // 🌟 GEMINI SLIDE UP EFFECT INITIALIZATION
-            if (!isChatStarted) {
-                isChatStarted = true;
-                subTitle.style.display = 'none'; // Clear smaller subtitle for clean look
-                heroSection.classList.add('shift-to-top'); // Smoothly slides heading + input to top
-                
-                setTimeout(() => {
-                    chatBox.style.display = 'block'; // Fades chat room right underneath the shifted element
-                }, 400);
-                
-                // Greeting message
-                appendMessage('ai', 'Greetings, Commander. I am AATOS, your orbital intelligence core. Systems are fully responsive and under your direct command.');
-            }
+            // Fallback check if user hit enter without clicking input directly
+            if (!isChatStarted) startChatTransition();
 
             appendMessage('user', text);
             cmdInput.value = '';
